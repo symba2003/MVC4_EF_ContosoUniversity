@@ -17,9 +17,30 @@ namespace MyContosoUniversity.Controllers
         //
         // GET: /Student/
 
-        public ActionResult Index()
+        public ActionResult Index(string sortOrder)
         {
-            return View(db.Students.ToList());
+            string s = Resources.MyResource.AddOnName;
+
+            ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "Name_desc" : "";
+            ViewBag.DateSortParm = sortOrder == "Date" ? "Date_desc" : "Date";
+            var students = from s in db.Students
+                           select s;
+            switch (sortOrder)
+            {
+                case "Name_desc":
+                    students = students.OrderByDescending(s => s.LastName);
+                    break;
+                case "Date":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "Date_desc":
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                default:
+                    students = students.OrderBy(s => s.LastName);
+                    break;
+            }
+            return View(students.ToList());
         }
 
         //
@@ -112,9 +133,18 @@ namespace MyContosoUniversity.Controllers
 
         //
         // GET: /Student/Delete/5
-
-        public ActionResult Delete(int id = 0)
+        /**
+         * The method that is called in response to a GET request displays a view that gives the user a chance
+         * to approve or cancel the delete operation. If the user approves it, a POST request is created.
+         * When that happens, the HttpPost Delete method is called and then that method actually performs
+         * the delete operation.
+         * ***/
+        public ActionResult Delete(bool? saveChangesError = false, int id = 0)
         {
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewBag.ErrorMessage = "Delete failed. Try again, and if the problem persists see your system administrator.";
+            }
             Student student = db.Students.Find(id);
             if (student == null)
             {
@@ -125,19 +155,46 @@ namespace MyContosoUniversity.Controllers
 
         //
         // POST: /Student/Delete/5
-
-        [HttpPost, ActionName("Delete")]
+        /*
+         changed the action method name from DeleteConfirmed to Delete. The scaffolded code named 
+         * the HttpPost Delete method DeleteConfirmed to give the HttpPost  method a unique signature. 
+         * ( The CLR requires overloaded methods to have different method parameters.) Now that the
+         * signatures are unique, you can stick with the MVC convention and use the same name for
+         * the HttpPost and HttpGet delete methods.
+         */
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public ActionResult Delete(int id)
         {
-            Student student = db.Students.Find(id);
-            db.Students.Remove(student);
-            db.SaveChanges();
+            try
+            {
+                Student student = db.Students.Find(id);
+                db.Students.Remove(student);
+                db.SaveChanges();
+                /*
+                 If improving performance in a high-volume application is a priority, you could avoid 
+                 * an unnecessary SQL query to retrieve the row by replacing the lines of code that call
+                 * the Find and Remove methods with the following code as shown in yellow highlight:
+                 * 
+                 * Student studentToDelete = new Student() { StudentID = id };
+                 * db.Entry(studentToDelete).State = EntityState.Deleted;
+                 * 
+                 */
+            }
+            catch (DataException/* dex */)
+            {
+                // uncomment dex and log error. 
+                return RedirectToAction("Delete", new { id = id, saveChangesError = true });
+            }
             return RedirectToAction("Index");
         }
 
         protected override void Dispose(bool disposing)
         {
+            /**
+             To make sure that database connections are properly closed and the resources they hold freed up,
+             * you should see to it that the context instance is disposed.
+             */
             db.Dispose();
             base.Dispose(disposing);
         }
