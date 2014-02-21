@@ -1,30 +1,50 @@
-﻿@model IEnumerable<ContosoUniversity.Models.Student>
+﻿@model PagedList.IPagedList<ContosoUniversity.Models.Student>
+@using PagedList.Mvc; 
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Students";
 }
 
-<h2>Index</h2>
+<h2>Students</h2>
 
 <p>
     @Html.ActionLink("Create New", "Create")
 </p>
+<!-- The default BeginForm submits form data with a POST, which means that parameters are passed in the HTTP message body and not in the URL 
+    as query strings. When you specify HTTP GET, the form data is passed in the URL as query strings, which enables users to bookmark the URL. 
+    The W3C guidelines for the use of HTTP GET specify that you should use GET when the action does not result in an update.
+    -->
+@using (Html.BeginForm("Index", "Student", FormMethod.Get))
+{
+    <p>
+        Find by name: @Html.TextBox("SearchString", ViewBag.CurrentFilter as string)  
+        <input type="submit" value="Search" />
+    </p>
+}
 <table>
     <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.LastName)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.FirstMidName)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.EnrollmentDate)
-        </th>
-        <th></th>
-    </tr>
+    <th></th>
+    <th>
+        <!-- The column header links use the query string to pass the current search string to the controller so that the user can sort within filter results -->
+        @Html.ActionLink("Last Name", "Index", new { sortOrder=ViewBag.NameSortParm, currentFilter=ViewBag.CurrentFilter })
+    </th>
+    <th>
+        First Name
+    </th>
+    <th>
+        @Html.ActionLink("Enrollment Date", "Index", new { sortOrder = ViewBag.DateSortParm, currentFilter = ViewBag.CurrentFilter })
+    </th>
+</tr>
+
 
 @foreach (var item in Model) {
     <tr>
+         <td>
+            @Html.ActionLink("Edit", "Edit", new { id=item.StudentID }) |
+            @Html.ActionLink("Details", "Details", new { id=item.StudentID }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.StudentID })
+        </td>
         <td>
             @Html.DisplayFor(modelItem => item.LastName)
         </td>
@@ -34,12 +54,11 @@
         <td>
             @Html.DisplayFor(modelItem => item.EnrollmentDate)
         </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.StudentID }) |
-            @Html.ActionLink("Details", "Details", new { id=item.StudentID }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.StudentID })
-        </td>
     </tr>
 }
 
 </table>
+<br />
+Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+@Html.PagedListPager( Model, page => Url.Action("Index", new { page, sortOrder = ViewBag.CurrentSort, currentFilter=ViewBag.CurrentFilter }) )

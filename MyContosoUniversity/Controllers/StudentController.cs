@@ -7,6 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using ContosoUniversity.Models;
 using ContosoUniversity.DAL;
+using PagedList;
 
 namespace MyContosoUniversity.Controllers
 {
@@ -17,31 +18,57 @@ namespace MyContosoUniversity.Controllers
         //
         // GET: /Student/
 
-        public ActionResult Index(string sortOrder)
+        public ViewResult Index(string sortOrder, string currentFilter, string searchString, int? page)
         {
-            string s = Resources.MyResource.AddOnName;
+            // A ViewBag property provides the view with the current sort order, because this must be included in the paging links in order to keep the sort order the same while paging
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
 
-            ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "Name_desc" : "";
-            ViewBag.DateSortParm = sortOrder == "Date" ? "Date_desc" : "Date";
+            // Another property, ViewBag.CurrentFilter, provides the view with the current filter string. This value must be included in the paging links in order to maintain the filter settings during paging, and it must be restored to the text box when the page is redisplayed. If the search string is changed during paging, the page has to be reset to 1, because the new filter can result in different data to display. The search string is changed when a value is entered in the text box and the submit button is pressed. In that case, the searchString parameter is not null.
+            if (searchString != null)
+            {
+                page = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewBag.CurrentFilter = searchString;
+
             var students = from s in db.Students
                            select s;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                students = students.Where(s => s.LastName.ToUpper().Contains(searchString.ToUpper())
+                                       || s.FirstMidName.ToUpper().Contains(searchString.ToUpper()));
+            }
             switch (sortOrder)
             {
-                case "Name_desc":
+                case "name_desc":
                     students = students.OrderByDescending(s => s.LastName);
                     break;
                 case "Date":
                     students = students.OrderBy(s => s.EnrollmentDate);
                     break;
-                case "Date_desc":
+                case "date_desc":
                     students = students.OrderByDescending(s => s.EnrollmentDate);
                     break;
-                default:
+                default:  // Name ascending 
                     students = students.OrderBy(s => s.LastName);
                     break;
             }
-            return View(students.ToList());
+
+            int pageSize = 3;
+            int pageNumber = (page ?? 1); // ?? -  null-coalescing operator. It returns the left-hand operand if the operand is not null; otherwise it returns the right hand operand.
+
+            /**
+           The query is not executed until you convert the IQueryable object into a collection by calling a method such as ToList. Therefore, this code results in a single query that is not executed until the return View statement.
+           */
+            return View(students.ToPagedList(pageNumber, pageSize));
         }
+       
 
         //
         // GET: /Student/Details/5
