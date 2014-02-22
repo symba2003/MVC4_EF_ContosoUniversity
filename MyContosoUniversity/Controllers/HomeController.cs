@@ -13,6 +13,12 @@ namespace MyContosoUniversity.Controllers
     // http://www.asp.net/whitepapers/aspnet-data-access-content-map
     // http://stephenwalther.com/archive/2009/01/21/asp-net-mvc-tip-46-ndash-donrsquot-use-delete-links-because
 
+    // lazy loading
+    // http://msdn.microsoft.com/en-us/magazine/hh205756.aspx
+
+    // fluent api
+    // http://blogs.msdn.com/b/aspnetue/archive/2011/05/04/entity-framework-code-first-tutorial-supplement-what-is-going-on-in-a-fluent-api-call.aspx
+
     public class HomeController : Controller
     {
         private SchoolContext db = new SchoolContext();
