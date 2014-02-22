@@ -22,6 +22,9 @@ namespace MyContosoUniversity.Controllers
     // Using the Entity Framework to Reduce Network Latency to SQL Azure
     // http://msdn.microsoft.com/en-us/magazine/gg309181.aspx
 
+    // Using the DropDownList Helper with ASP.NET MVC
+    // http://www.asp.net/mvc/tutorials/javascript/working-with-the-dropdownlist-box-and-jquery/using-the-dropdownlist-helper-with-aspnet-mvc
+
     public class HomeController : Controller
     {
         private SchoolContext db = new SchoolContext();

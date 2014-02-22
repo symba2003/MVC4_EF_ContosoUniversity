@@ -117,30 +117,85 @@ namespace MyContosoUniversity.Controllers
 
         public ActionResult Edit(int id = 0)
         {
-            Instructor instructor = db.Instructors.Find(id);
-            if (instructor == null)
-            {
-                return HttpNotFound();
-            }
-            ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", instructor.InstructorID);
+            /**
+             * When you edit an instructor record, you want to be able to update the instructor's office assignment. The Instructor entity has 
+             * a one-to-zero-or-one relationship with the OfficeAssignment entity, which means you must handle the following situations:
+             * - If the user clears the office assignment and it originally had a value, you must remove and delete the OfficeAssignment entity.
+             * - If the user enters an office assignment value and it originally was empty, you must create a new OfficeAssignment entity.
+             * - If the user changes the value of an office assignment, you must change the value in an existing OfficeAssignment entity.
+             * 
+             * 
+             * 
+             * ***********/
+            // The scaffolded code here isn't what you want. It's setting up data for a drop-down list, but you what you need is a text box
+            //Instructor instructor = db.Instructors.Find(id);
+            //if (instructor == null)
+            //{
+            //    return HttpNotFound();
+            //}
+            
+            //ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", instructor.InstructorID);
+
+
+            // eager loading for the associated OfficeAssignment entity. You can't perform eager loading with the Find method, 
+            // so the Where and Single methods are used instead to select the instructor.
+            Instructor instructor = db.Instructors
+                .Include(i => i.OfficeAssignment)
+                .Include(i => i.Courses)
+                .Where(i => i.InstructorID == id)
+                .Single();
+            PopulateAssignedCourseData(instructor);
             return View(instructor);
         }
 
         //
         // POST: /Instructor/Edit/5
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(Instructor instructor)
+        public ActionResult Edit(int id, FormCollection formCollection, string[] selectedCourses)
         {
-            if (ModelState.IsValid)
+            // Gets the current Instructor entity from the database using eager loading for the OfficeAssignment navigation property.
+            var instructorToUpdate = db.Instructors
+                .Include(i => i.OfficeAssignment)
+                .Include(i => i.Courses)
+                .Where(i => i.InstructorID == id)
+                .Single();
+
+            // Updates the retrieved Instructor entity with values from the model binder. The TryUpdateModel overload used
+            // enables you to whitelist the properties you want to include
+            if (TryUpdateModel(instructorToUpdate, "",
+               new string[] { "LastName", "FirstMidName", "HireDate", "OfficeAssignment" }))
             {
-                db.Entry(instructor).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                try
+                {
+                    if (String.IsNullOrWhiteSpace(instructorToUpdate.OfficeAssignment.Location))
+                    {
+                        // If the office location is blank, sets the Instructor.OfficeAssignment property to null so that the related row in the OfficeAssignment table will be deleted.
+                        instructorToUpdate.OfficeAssignment = null;
+                    }
+
+                    /* Since the view doesn't have a collection of Course entities, the model binder can't automatically update the Courses 
+                     * navigation property. Instead of using the model binder to update the Courses navigation property, you'll do that in 
+                     * the new UpdateInstructorCourses method. Therefore you need to exclude the Courses property from model binding. 
+                     * This doesn't require any change to the code that calls TryUpdateModel because you're using the whitelisting overload
+                     * and Courses isn't in the include list.
+                     */
+                    UpdateInstructorCourses(selectedCourses, instructorToUpdate);
+
+                    db.Entry(instructorToUpdate).State = EntityState.Modified;
+                    db.SaveChanges();
+
+                    return RedirectToAction("Index");
+                }
+                catch (DataException /* dex */)
+                {
+                    //Log the error (uncomment dex variable name after DataException and add a line here to write a log.
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+                }
             }
-            ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", instructor.InstructorID);
-            return View(instructor);
+            //ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", id);
+            PopulateAssignedCourseData(instructorToUpdate);
+            return View(instructorToUpdate);
         }
 
         //
@@ -163,10 +218,74 @@ namespace MyContosoUniversity.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Instructor instructor = db.Instructors.Find(id);
+            Instructor instructor = db.Instructors
+                     .Include(i => i.OfficeAssignment)
+                     .Where(i => i.InstructorID == id)
+                     .Single();
+
+            instructor.OfficeAssignment = null;
             db.Instructors.Remove(instructor);
+
+            /*
+             *  If you try to delete an instructor who is assigned to a department as administrator, you'll get a referential integrity error.
+                From EF6 using MVC5 Sample
+             *  var department = db.Departments
+                        .Where(d => d.InstructorID == id)
+                        .SingleOrDefault();
+                    if (department != null)
+                    {
+                        department.InstructorID = null;
+                    }
+             */
             db.SaveChanges();
             return RedirectToAction("Index");
+        }
+
+        private void PopulateAssignedCourseData(Instructor instructor)
+        {
+            var allCourses = db.Courses;
+            var instructorCourses = new HashSet<int>(instructor.Courses.Select(c => c.CourseID));
+            var viewModel = new List<AssignedCourseData>();
+            foreach (var course in allCourses)
+            {
+                viewModel.Add(new AssignedCourseData
+                {
+                    CourseID = course.CourseID,
+                    Title = course.Title,
+                    Assigned = instructorCourses.Contains(course.CourseID)
+                });
+            }
+            ViewBag.Courses = viewModel;
+        }
+
+        private void UpdateInstructorCourses(string[] selectedCourses, Instructor instructorToUpdate)
+        {
+            if (selectedCourses == null)
+            {
+                instructorToUpdate.Courses = new List<Course>();
+                return;
+            }
+
+            var selectedCoursesHS = new HashSet<string>(selectedCourses);
+            var instructorCourses = new HashSet<int>
+                (instructorToUpdate.Courses.Select(c => c.CourseID));
+            foreach (var course in db.Courses)
+            {
+                if (selectedCoursesHS.Contains(course.CourseID.ToString())) 
+                { 
+                    if (!instructorCourses.Contains(course.CourseID))
+                    { // If the check box for a course was selected but the course isn't in the Instructor.Courses navigation property
+                        instructorToUpdate.Courses.Add(course);
+                    }
+                }
+                else 
+                {
+                    if (instructorCourses.Contains(course.CourseID))
+                    { // If the check box for a course wasn't selected, but the course is in the Instructor.Courses navigation property
+                        instructorToUpdate.Courses.Remove(course);
+                    }
+                }
+            }
         }
 
         protected override void Dispose(bool disposing)

@@ -42,7 +42,8 @@ namespace MyContosoUniversity.Controllers
 
         public ActionResult Create()
         {
-            ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name");
+           // ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name");
+            PopulateDepartmentsDropDownList();
             return View();
         }
 
@@ -51,16 +52,27 @@ namespace MyContosoUniversity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Course course)
+        public ActionResult Create(
+            [Bind(Include = "CourseID,Title,Credits,DepartmentID")]
+            Course course)
         {
-            if (ModelState.IsValid)
+            try
             {
-                db.Courses.Add(course);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                if (ModelState.IsValid)
+                {
+                    db.Courses.Add(course);
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
+            catch (DataException /* dex */)
+            {
+                //Log the error (uncomment dex variable name after DataException and add a line here to write a log.)
+                ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+            }
+            PopulateDepartmentsDropDownList(course.DepartmentID);
 
-            ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name", course.DepartmentID);
+            //ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name", course.DepartmentID);
             return View(course);
         }
 
@@ -70,11 +82,15 @@ namespace MyContosoUniversity.Controllers
         public ActionResult Edit(int id = 0)
         {
             Course course = db.Courses.Find(id);
-            if (course == null)
-            {
-                return HttpNotFound();
-            }
-            ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name", course.DepartmentID);
+            PopulateDepartmentsDropDownList(course.DepartmentID);
+            return View(course);
+
+            //Course course = db.Courses.Find(id);
+            //if (course == null)
+            //{
+            //    return HttpNotFound();
+            //}
+            //ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name", course.DepartmentID);
             return View(course);
         }
 
@@ -83,17 +99,43 @@ namespace MyContosoUniversity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(Course course)
+        public ActionResult Edit(
+             [Bind(Include = "CourseID,Title,Credits,DepartmentID")]
+            Course course)
         {
-            if (ModelState.IsValid)
+            try
             {
-                db.Entry(course).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                if (ModelState.IsValid)
+                {
+                    db.Entry(course).State = EntityState.Modified;
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
-            ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name", course.DepartmentID);
+            catch (DataException /* dex */)
+            {
+                //Log the error (uncomment dex variable name after DataException and add a line here to write a log.)
+                ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+            }
+            PopulateDepartmentsDropDownList(course.DepartmentID); // This code ensures that when the page is redisplayed to show the error message, whatever department was selected stays selected.
+            //ViewBag.DepartmentID = new SelectList(db.Departments, "DepartmentID", "Name", course.DepartmentID);
             return View(course);
         }
+
+        private void PopulateDepartmentsDropDownList(object selectedDepartment = null)
+        {
+            /*
+             The PopulateDepartmentsDropDownList method gets a list of all departments sorted by name, creates a SelectList collection 
+             * for a drop-down list, and passes the collection to the view in a ViewBag property. The method accepts the optional selectedDepartment
+             * parameter that allows the calling code to specify the item that will be selected when the drop-down list is rendered. The view will
+             * pass the name DepartmentID to the DropDownList helper, and the helper then knows to look in the ViewBag object for a SelectList named 
+             * DepartmentID.
+             */
+            var departmentsQuery = from d in db.Departments
+                                   orderby d.Name
+                                   select d;
+            ViewBag.DepartmentID = new SelectList(departmentsQuery, "DepartmentID", "Name", selectedDepartment);
+        } 
 
         //
         // GET: /Course/Delete/5
