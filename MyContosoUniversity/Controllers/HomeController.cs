@@ -19,6 +19,9 @@ namespace MyContosoUniversity.Controllers
     // fluent api
     // http://blogs.msdn.com/b/aspnetue/archive/2011/05/04/entity-framework-code-first-tutorial-supplement-what-is-going-on-in-a-fluent-api-call.aspx
 
+    // Using the Entity Framework to Reduce Network Latency to SQL Azure
+    // http://msdn.microsoft.com/en-us/magazine/gg309181.aspx
+
     public class HomeController : Controller
     {
         private SchoolContext db = new SchoolContext();
