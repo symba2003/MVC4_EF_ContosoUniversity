@@ -138,7 +138,7 @@ namespace MyContosoUniversity.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(
-           [Bind(Include = "StudentID, LastName, FirstMidName, EnrollmentDate")]
+           [Bind(Include = "PersonID, LastName, FirstMidName, EnrollmentDate")]
                 Student student)
         {
             try
@@ -203,7 +203,7 @@ namespace MyContosoUniversity.Controllers
                  * an unnecessary SQL query to retrieve the row by replacing the lines of code that call
                  * the Find and Remove methods with the following code as shown in yellow highlight:
                  * 
-                 * Student studentToDelete = new Student() { StudentID = id };
+                 * Student studentToDelete = new Student() { PersonID = id };
                  * db.Entry(studentToDelete).State = EntityState.Deleted;
                  * 
                  */

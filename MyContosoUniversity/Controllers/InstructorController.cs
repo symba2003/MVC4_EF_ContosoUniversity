@@ -38,9 +38,9 @@ namespace MyContosoUniversity.Controllers
                  * The view model's Courses property is then loaded with the Course entities from that instructor's Courses navigation property.
                  * 
                  */
-                ViewBag.InstructorID = id.Value;
+                ViewBag.PersonID = id.Value;
                 viewModel.Courses = viewModel.Instructors.Where(
-                    i => i.InstructorID == id.Value).Single().Courses;
+                    i => i.PersonID == id.Value).Single().Courses;
                 /*
                  You use the Single method on a collection when you know the collection will have only one item. The Single method throws
                  * an exception if the collection passed to it is empty or if there's more than one item. An alternative is SingleOrDefault,
@@ -90,7 +90,7 @@ namespace MyContosoUniversity.Controllers
 
         public ActionResult Create()
         {
-            ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location");
+            ViewBag.PersonID = new SelectList(db.OfficeAssignments, "PersonID", "Location");
             return View();
         }
 
@@ -108,7 +108,7 @@ namespace MyContosoUniversity.Controllers
                 return RedirectToAction("Index");
             }
 
-            ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", instructor.InstructorID);
+            ViewBag.PersonID = new SelectList(db.OfficeAssignments, "PersonID", "Location", instructor.PersonID);
             return View(instructor);
         }
 
@@ -134,7 +134,7 @@ namespace MyContosoUniversity.Controllers
             //    return HttpNotFound();
             //}
             
-            //ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", instructor.InstructorID);
+            //ViewBag.PersonID = new SelectList(db.OfficeAssignments, "PersonID", "Location", instructor.PersonID);
 
 
             // eager loading for the associated OfficeAssignment entity. You can't perform eager loading with the Find method, 
@@ -142,7 +142,7 @@ namespace MyContosoUniversity.Controllers
             Instructor instructor = db.Instructors
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.Courses)
-                .Where(i => i.InstructorID == id)
+                .Where(i => i.PersonID == id)
                 .Single();
             PopulateAssignedCourseData(instructor);
             return View(instructor);
@@ -158,7 +158,7 @@ namespace MyContosoUniversity.Controllers
             var instructorToUpdate = db.Instructors
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.Courses)
-                .Where(i => i.InstructorID == id)
+                .Where(i => i.PersonID == id)
                 .Single();
 
             // Updates the retrieved Instructor entity with values from the model binder. The TryUpdateModel overload used
@@ -193,7 +193,7 @@ namespace MyContosoUniversity.Controllers
                     ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
                 }
             }
-            //ViewBag.InstructorID = new SelectList(db.OfficeAssignments, "InstructorID", "Location", id);
+            //ViewBag.PersonID = new SelectList(db.OfficeAssignments, "PersonID", "Location", id);
             PopulateAssignedCourseData(instructorToUpdate);
             return View(instructorToUpdate);
         }
@@ -220,7 +220,7 @@ namespace MyContosoUniversity.Controllers
         {
             Instructor instructor = db.Instructors
                      .Include(i => i.OfficeAssignment)
-                     .Where(i => i.InstructorID == id)
+                     .Where(i => i.PersonID == id)
                      .Single();
 
             instructor.OfficeAssignment = null;
@@ -230,11 +230,11 @@ namespace MyContosoUniversity.Controllers
              *  If you try to delete an instructor who is assigned to a department as administrator, you'll get a referential integrity error.
                 From EF6 using MVC5 Sample
              *  var department = db.Departments
-                        .Where(d => d.InstructorID == id)
+                        .Where(d => d.PersonID == id)
                         .SingleOrDefault();
                     if (department != null)
                     {
-                        department.InstructorID = null;
+                        department.PersonID = null;
                     }
              */
             db.SaveChanges();

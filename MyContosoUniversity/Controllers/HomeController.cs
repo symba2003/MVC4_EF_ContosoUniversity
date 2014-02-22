@@ -31,6 +31,9 @@ namespace MyContosoUniversity.Controllers
     // Using DbContext in EF 4.1 Part 5: Working with Property Values
     // http://blogs.msdn.com/b/adonet/archive/2011/01/30/using-dbcontext-in-ef-feature-ctp5-part-5-working-with-property-values.aspx
 
+    // Inheritance with EF Code First: Part 1 – Table per Hierarchy (TPH)
+    // http://weblogs.asp.net/manavi/archive/2010/12/24/inheritance-mapping-strategies-with-entity-framework-code-first-ctp5-part-1-table-per-hierarchy-tph.aspx
+
     public class HomeController : Controller
     {
         private SchoolContext db = new SchoolContext();

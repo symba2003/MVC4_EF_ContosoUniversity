@@ -20,7 +20,7 @@ namespace ContosoUniversity.Models
         public DateTime StartDate { get; set; }
 
         [Display(Name = "Administrator")]
-        public int? InstructorID { get; set; }
+        public int? PersonID { get; set; }
 
         [Timestamp]
         public byte[] RowVersion { get; set; }
@@ -31,8 +31,8 @@ namespace ContosoUniversity.Models
         /*
          Note By convention, the Entity Framework enables cascade delete for non-nullable foreign keys and for many-to-many relationships. 
          * This can result in circular cascade delete rules, which will cause an exception when your initializer code runs. For example,
-         * if you didn't define the Department.InstructorID property as nullable, you'd get the following exception message when the initializer
-         * runs: "The referential relationship will result in a cyclical reference that's not allowed." If your business rules required InstructorID
+         * if you didn't define the Department.PersonID property as nullable, you'd get the following exception message when the initializer
+         * runs: "The referential relationship will result in a cyclical reference that's not allowed." If your business rules required PersonID
          * property as non-nullable, you would have to use the following fluent API to disable cascade delete on the relationship:
          * 
          * modelBuilder.Entity().HasRequired(d => d.Administrator).WithMany().WillCascadeOnDelete(false);

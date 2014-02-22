@@ -10,12 +10,12 @@ namespace ContosoUniversity.Models
          */
         [Key]
         [ForeignKey("Instructor")]
-        public int InstructorID { get; set; }
+        public int PersonID { get; set; }
         [StringLength(50)]
         [Display(Name = "Office Location")]
         public string Location { get; set; }
 
-        // You could put a [Required] attribute on the Instructor navigation property to specify that there must be a related instructor, but you don't have to do that because the InstructorID foreign key (which is also the key to this table) is non-nullable.
+        // You could put a [Required] attribute on the Instructor navigation property to specify that there must be a related instructor, but you don't have to do that because the PersonID foreign key (which is also the key to this table) is non-nullable.
         public virtual Instructor Instructor { get; set; }
     }
 }
