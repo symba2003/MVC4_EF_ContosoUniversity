@@ -25,6 +25,12 @@ namespace MyContosoUniversity.Controllers
     // Using the DropDownList Helper with ASP.NET MVC
     // http://www.asp.net/mvc/tutorials/javascript/working-with-the-dropdownlist-box-and-jquery/using-the-dropdownlist-helper-with-aspnet-mvc
 
+    // Using DbContext in EF 4.1 Part 9: Optimistic Concurrency Patterns
+    // http://blogs.msdn.com/b/adonet/archive/2011/02/03/using-dbcontext-in-ef-feature-ctp5-part-9-optimistic-concurrency-patterns.aspx
+
+    // Using DbContext in EF 4.1 Part 5: Working with Property Values
+    // http://blogs.msdn.com/b/adonet/archive/2011/01/30/using-dbcontext-in-ef-feature-ctp5-part-5-working-with-property-values.aspx
+
     public class HomeController : Controller
     {
         private SchoolContext db = new SchoolContext();
